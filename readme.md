@@ -26,7 +26,7 @@ cd Ledger.Api
 dotnet run
 ```
 
-* By default, the API listens on `http://localhost:5076` (or as configured in `launchSettings.json`).
+* By default, the API listens on `https://localhost:7292` (or as configured in `launchSettings.json`). I used Scalar for manual API testing during development, which helped verify the endpoints and payloads efficiently. (`https://localhost:7292/scalar/v1`)
 
 **Run tests:**
 
