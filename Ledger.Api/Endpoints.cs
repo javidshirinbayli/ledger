@@ -105,5 +105,39 @@ public static class Endpoints
             .WithDescription("Retrieves all transactions for the specified account, ordered by date.")
             .Produces<IEnumerable<TransactionResponse>>(200)
             .Produces(404);
+        
+        app.MapPost("/accounts/{fromAccountId}/transfer", async (
+                TransferRequest request,
+                ILedgerService ledgerService,
+                IValidator<TransferRequest> validator) =>
+            {
+                var validationResult = await validator.ValidateAsync(request);
+                if (!validationResult.IsValid)
+                    return Results.BadRequest(validationResult.Errors);
+
+                try
+                {
+                    var transactions = await ledgerService.Transfer(request);
+                    return Results.Created($"/accounts/{request.FromAccountId}/transfer", transactions);
+                }
+                catch (AccountNotFoundException ex)
+                {
+                    return Results.NotFound(new { error = ex.Message });
+                }
+                catch (InsufficientFundsException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+                catch (LedgerException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+            })
+            .WithName("Transfer")
+            .WithSummary("Transfer Money Between Accounts")
+            .WithDescription("Records a transactions (deposit and withdrawal) for the specified accounts.")
+            .Produces<TransactionResponse>(201)
+            .Produces(400)
+            .Produces(404);
     }
 }

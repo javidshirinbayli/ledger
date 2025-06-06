@@ -10,4 +10,5 @@ public interface ILedgerService
     Task<AccountBalanceResponse?> GetAccountBalanceAsync(string accountId);
     Task<Transaction> RecordTransactionAsync(string accountId, CreateTransactionRequest request);
     Task<IEnumerable<TransactionResponse>> GetTransactionHistoryAsync(string accountId);
+    Task<Transaction[]> Transfer(TransferRequest request);
 }

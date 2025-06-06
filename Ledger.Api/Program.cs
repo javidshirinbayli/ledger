@@ -25,6 +25,7 @@ builder.Services.Configure<TransactionLimitsOptions>(
 
 builder.Services.AddScoped<IValidator<CreateAccountRequest>, CreateAccountRequestValidator>();
 builder.Services.AddScoped<IValidator<CreateTransactionRequest>, CreateTransactionRequestValidator>();
+builder.Services.AddScoped<IValidator<TransferRequest>, TransferRequestValidator>();
 
 builder.Services.AddSingleton<IAccountRepository, InMemoryAccountRepository>();
 builder.Services.AddSingleton<ITransactionRepository, InMemoryTransactionRepository>();

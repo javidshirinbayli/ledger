@@ -1,7 +1,9 @@
+using System.Transactions;
 using Ledger.Core.Exceptions;
 using Ledger.Core.Models;
 using Ledger.Core.Models.Dtos;
 using Ledger.Core.Repositories;
+using Transaction = Ledger.Core.Models.Transaction;
 
 namespace Ledger.Core.Services;
 
@@ -87,5 +89,22 @@ public class LedgerService(
                 t.Description,
                 t.Timestamp
             ));
+    }
+
+    public async Task<Transaction[]> Transfer(TransferRequest request)
+    {
+        var transactionFromTask = RecordTransactionAsync(request.FromAccountId, new(
+            TransactionType.Withdrawal,
+            request.Amount,
+            request.Description
+        ));
+        
+        var transactionToTask = RecordTransactionAsync(request.ToAccountId, new(
+            TransactionType.Deposit,
+            request.Amount,
+            request.Description
+        ));
+
+        return await Task.WhenAll(transactionFromTask, transactionToTask);
     }
 }

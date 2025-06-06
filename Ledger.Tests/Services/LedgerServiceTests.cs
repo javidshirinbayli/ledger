@@ -193,4 +193,45 @@ public class LedgerServiceTests
         Assert.Equal("t2", result[0].Id);
         Assert.Equal("t1", result[1].Id);
     }
+    
+    [Fact]
+    public async Task Transfer_Throws_If_Account_Not_Found()
+    {
+        _accountRepoMock.Setup(x => x.GetByIdAsync("none")).ReturnsAsync((Account?)null);
+        var service = CreateService();
+        var request = new TransferRequest("none", "none", 10);
+
+        await Assert.ThrowsAsync<AccountNotFoundException>(() =>
+            service.Transfer(request));
+    }
+    
+    [Fact]
+    public async Task Transfer_Decreases_Balance_Of_FromAccount()
+    {
+        var testNow = new DateTime(2025, 1, 2, 3, 4, 5);
+        _fakeTimeProvider.SetUtcNow(testNow);
+
+        var fromAccountId = "from_acc";        
+        var toAccountId = "to_acc";        
+        
+        var fromAccount = new Account { Id = fromAccountId, Name = "User", Balance = 100, CreatedAt = testNow };
+        _accountRepoMock.Setup(x => x.GetByIdAsync(fromAccountId)).ReturnsAsync(fromAccount);
+        
+        var toAccount = new Account { Id = toAccountId, Name = "User", Balance = 0, CreatedAt = testNow };
+        _accountRepoMock.Setup(x => x.GetByIdAsync(toAccountId)).ReturnsAsync(toAccount);
+
+        _transactionRepoMock.Setup(x => x.AddAsync(It.IsAny<Transaction>()))
+            .Returns<Transaction>(Task.FromResult);
+        _accountRepoMock.Setup(x => x.UpdateAsync(fromAccount)).Returns(Task.CompletedTask);
+        _accountRepoMock.Setup(x => x.UpdateAsync(toAccount)).Returns(Task.CompletedTask);
+
+        var service = CreateService();
+        var request = new TransferRequest("from_acc", "to_acc", 10);
+
+        var transaction = await service.Transfer(request);
+
+        Assert.Equal(TransactionType.Withdrawal, transaction[0].Type);
+        Assert.Equal(TransactionType.Deposit, transaction[1].Type);
+        Assert.Equal(90, fromAccount.Balance);
+    }
 }
